@@ -2,7 +2,7 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
+
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -69,15 +69,90 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+	pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self
+    where
+        T: Ord,
+    {
+        let mut c = LinkedList::new();
+
+        // 处理两个链表中的节点，直到其中一个为空
+        loop {
+            let a_ptr = list_a.start;
+            let b_ptr = list_b.start;
+
+            match (a_ptr, b_ptr) {
+                (Some(a), Some(b)) => {
+                    let a_val = unsafe { &(*a.as_ptr()).val };
+                    let b_val = unsafe { &(*b.as_ptr()).val };
+
+                    if a_val <= b_val {
+                        // 取出a的当前节点
+                        let current_a = list_a.start.take().unwrap();
+                        list_a.start = unsafe { (*current_a.as_ptr()).next };
+                        unsafe { (*current_a.as_ptr()).next = None };
+
+                        // 添加到c中
+                        if c.end.is_some() {
+                            unsafe { (*c.end.unwrap().as_ptr()).next = Some(current_a) };
+                            c.end = Some(current_a);
+                        } else {
+                            c.start = Some(current_a);
+                            c.end = Some(current_a);
+                        }
+                        c.length += 1;
+                    } else {
+                        // 取出b的当前节点
+                        let current_b = list_b.start.take().unwrap();
+                        list_b.start = unsafe { (*current_b.as_ptr()).next };
+                        unsafe { (*current_b.as_ptr()).next = None };
+
+                        // 添加到c中
+                        if c.end.is_some() {
+                            unsafe { (*c.end.unwrap().as_ptr()).next = Some(current_b) };
+                            c.end = Some(current_b);
+                        } else {
+                            c.start = Some(current_b);
+                            c.end = Some(current_b);
+                        }
+                        c.length += 1;
+                    }
+                }
+                _ => break,
+            }
         }
-	}
+
+        // 处理list_a的剩余节点
+        while let Some(current_a) = list_a.start.take() {
+            list_a.start = unsafe { (*current_a.as_ptr()).next };
+            unsafe { (*current_a.as_ptr()).next = None };
+
+            if c.end.is_some() {
+                unsafe { (*c.end.unwrap().as_ptr()).next = Some(current_a) };
+                c.end = Some(current_a);
+            } else {
+                c.start = Some(current_a);
+                c.end = Some(current_a);
+            }
+            c.length += 1;
+        }
+
+        // 处理list_b的剩余节点
+        while let Some(current_b) = list_b.start.take() {
+            list_b.start = unsafe { (*current_b.as_ptr()).next };
+            unsafe { (*current_b.as_ptr()).next = None };
+
+            if c.end.is_some() {
+                unsafe { (*c.end.unwrap().as_ptr()).next = Some(current_b) };
+                c.end = Some(current_b);
+            } else {
+                c.start = Some(current_b);
+                c.end = Some(current_b);
+            }
+            c.length += 1;
+        }
+
+        c
+    }
 }
 
 impl<T> Display for LinkedList<T>
